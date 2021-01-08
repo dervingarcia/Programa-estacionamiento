@@ -5,15 +5,15 @@
 #include <stdlib.h>
 #include <time.h>
 
-/* Definición del monto a cobrar por hora y del tamaño máximo de las cadenas */
+/* Definici�n del monto a cobrar por hora y del tama�o m�ximo de las cadenas */
 #define MONTO 5.5
 #define TAM 20
 
-/* Definición de los codigos de error */
+/* Definici�n de los codigos de error */
 #define OK 0
 #define ERROR 1
 
-/* Definición de la estructura del estacionamiento */
+/* Definici�n de la estructura del estacionamiento */
 typedef struct ESTACIONAMIENTO {
     char modelo[TAM];
     char matricula[TAM];
@@ -25,7 +25,7 @@ typedef struct ESTACIONAMIENTO {
 Vehiculo *primero[100];
 unsigned cantd[100];
 
-/* Definición de las variables para controlar el tiempo */
+/* Definici�n de las variables para controlar el tiempo */
 char *SEMANA[7] = {
     "Domingo",
     "Lunes",
@@ -37,7 +37,7 @@ char *SEMANA[7] = {
 };
 int S, DIA, MES, ANNO;
 
-/* Función que establece valores iniciales para la estructura del estacionamiento */
+/* Funci�n que establece valores iniciales para la estructura del estacionamiento */
 void inicializarLista() {
     register int i;
     
@@ -47,7 +47,7 @@ void inicializarLista() {
     }
 }
 
-/* Función que comprueba la fecha actual y avanza de día */
+/* Funci�n que comprueba la fecha actual y avanza de d�a */
 void comprobarFecha() {
     static unsigned a = 0;
     time_t tiempo = time(0) + a;
@@ -59,16 +59,16 @@ void comprobarFecha() {
     a += 3600 * 24;
 }
 
-/* Función que muestra la presentación */
+/* Funci�n que muestra la presentaci�n */
 void presentacion() {
-        puts("\n\tBIENVENIDO AL ESTACIONAMIENTO\n");
-        printf("\n%i-%i-%i, %s\n", DIA, MES, ANNO, SEMANA[S]);
-        puts("\nEl horario de atencion es de 7:00 am hasta 6:00 pm de lunes a sabado.");
-        puts("\nEn nuestro estacionamiento el monto de estancia por hora es de 5,50 bs.");
-        puts("Si pasa de 30 minutos se cobrara hora completa.");
+        puts("\n\t* Programa que lleva el control de un estacionamiento *\n");
+        printf("\n(%i-%i-%i, %s)\n\n", DIA, MES, ANNO, SEMANA[S]);
+        puts("* El horario de atencion es de 7:00 am hasta 6:00 pm de lunes a sabado.");
+        puts("* El monto de estancia es de 5,50 bs. por hora.");
+        puts("* Si se pasa de 30 minutos se cobrara hora completa.");
 }
 
-/* Función que crea el menú y retorna la opción elegida */
+/* Funci�n que crea el men� y retorna la opci�n elegida */
 char mostrarMenu() {
     register char d;
     
@@ -85,7 +85,7 @@ char mostrarMenu() {
     return d;
 }
 
-/* Función que muestra el reporte de las ganancias y avanza de día */
+/* Funci�n que muestra el reporte de las ganancias y avanza de d�a */
 void mostrarReporte() {
     static double gananciasMes = 0.0;
     double gananciasDia = 0.0;
@@ -120,13 +120,13 @@ void mostrarReporte() {
     gananciasMes += gananciasDia = horas * MONTO;
     autosMes[0] += autosDia[0];
     autosMes[1] += autosDia[1];
-    puts("\n\n\tREPORTE DIARIO\n");
-    printf("\nLas Ganancias de Hoy han sido: Bs %.2lf.\n", gananciasDia);
-    printf("Con un total de %i vehiculos atendidos y %i vehiculos del personal.\n", autosDia[1], autosDia[0]);
+    puts("\n\n\t** Reporte Diario **\n");
+    printf("\n* Las Ganancias de Hoy han sido: Bs %.2lf.\n", gananciasDia);
+    printf("* Con un total de %i vehiculos atendidos y %i vehiculos del personal.\n\n", autosDia[1], autosDia[0]);
     if(DIA == 1) {
-        puts("\n\n\tREPORTE MENSUAL\n");
-        printf("\nLas Ganancias del Mes han sido: Bs %.2lf.\n", gananciasMes);
-        printf("Con un total de %i vehiculos atendidos y %i vehiculos del personal.\n", autosMes[1], autosMes[0]);
+        puts("\n\n\t** Reporte Mensual **\n");
+        printf("\n* Las Ganancias del Mes han sido: Bs %.2lf.\n", gananciasMes);
+        printf("* Con un total de %i vehiculos atendidos y %i vehiculos del personal.\n\n", autosMes[1], autosMes[0]);
         gananciasMes = 0.0;
         autosMes[0] = 0;
         autosMes[1] = 0;
@@ -135,7 +135,7 @@ void mostrarReporte() {
     system("PAUSE");
 }
 
-/* Función que muestra el registro de vehiculos */
+/* Funci�n que muestra el registro de vehiculos */
 void mostrarRegistro() {
     register int i, j, k = 0;
     Vehiculo *actual;
@@ -163,8 +163,8 @@ void mostrarRegistro() {
     system("PAUSE");
 }
 
-/* Función que comprueba si el lugar esta ocupado y, sino lo está, guarda los datos.
-Recibe como parámetros: puesto, hora/minuto de entrada, hora/minuto de salida, modelo, matricula y color */
+/* Funci�n que comprueba si el lugar esta ocupado y, sino lo est�, guarda los datos.
+Recibe como par�metros: puesto, hora/minuto de entrada, hora/minuto de salida, modelo, matricula y color */
 int comprobarEspacio(int d, int hE, int mE, int hS, int mS, char *ml, char *mc, char *cl) {
     register int i;
     Vehiculo *actual = primero[d-1];
@@ -208,7 +208,7 @@ int comprobarEspacio(int d, int hE, int mE, int hS, int mS, char *ml, char *mc, 
     return OK;
 }
 
-/* Función que controla el ingreso de vehículos */
+/* Funci�n que controla el ingreso de veh�culos */
 void ingresoVehiculo() {
     char modelo[TAM], matricula[TAM], color[TAM];
     unsigned horaEnt, minEnt;
@@ -281,7 +281,7 @@ void ingresoVehiculo() {
     system("PAUSE");
 }
 
-/* Aquí empieza el programa */
+/* Aqu� empieza el programa */
 int main() {
     register char opc;
     
