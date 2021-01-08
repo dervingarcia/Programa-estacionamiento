@@ -1,0 +1,310 @@
+/* Programa que lleva el control de un estacionamiento */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+/* Definición del monto a cobrar por hora y del tamaño máximo de las cadenas */
+#define MONTO 5.5
+#define TAM 20
+
+/* Definición de los codigos de error */
+#define OK 0
+#define ERROR 1
+
+/* Definición de la estructura del estacionamiento */
+typedef struct ESTACIONAMIENTO {
+    char modelo[TAM];
+    char matricula[TAM];
+    char color[TAM];
+    int horaEnt, minEnt;
+    int horaSal, minSal;
+    struct ESTACIONAMIENTO *sig;
+} Vehiculo;
+Vehiculo *primero[100];
+unsigned cantd[100];
+
+/* Definición de las variables para controlar el tiempo */
+char *SEMANA[7] = {
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miercoles",
+    "Jueves",
+    "Viernes",
+    "Sabado"
+};
+int S, DIA, MES, ANNO;
+
+/* Función que establece valores iniciales para la estructura del estacionamiento */
+void inicializarLista() {
+    register int i;
+    
+    for(i = 0; i < 100; i++) {
+        primero[i] = NULL;
+        cantd[i] = 0;
+    }
+}
+
+/* Función que comprueba la fecha actual y avanza de día */
+void comprobarFecha() {
+    static unsigned a = 0;
+    time_t tiempo = time(0) + a;
+    struct tm *tlocal = localtime(&tiempo);
+    char fecha[TAM];
+    
+    strftime(fecha, TAM, "%w/%d/%m/%Y", tlocal);
+    sscanf(fecha, "%u/%u/%u/%u", &S, &DIA, &MES, &ANNO);
+    a += 3600 * 24;
+}
+
+/* Función que muestra la presentación */
+void presentacion() {
+        puts("\n\tBIENVENIDO AL ESTACIONAMIENTO\n");
+        printf("\n%i-%i-%i, %s\n", DIA, MES, ANNO, SEMANA[S]);
+        puts("\nEl horario de atencion es de 7:00 am hasta 6:00 pm de lunes a sabado.");
+        puts("\nEn nuestro estacionamiento el monto de estancia por hora es de 5,50 bs.");
+        puts("Si pasa de 30 minutos se cobrara hora completa.");
+}
+
+/* Función que crea el menú y retorna la opción elegida */
+char mostrarMenu() {
+    register char d;
+    
+    puts("\nElija la opcion deseada:\n");
+    puts("\t0 -- Salir.");
+    puts("\t1 -- Avanzar Dia.");
+    if(!strstr(SEMANA[S], "Domingo")) {
+        puts("\t2 -- Mostrar Registro.");
+        puts("\t3 -- Ingresar Vehiculo.");
+        while((d = getch()) < '0' || d > '3');
+        return d;
+    }
+    while((d = getch()) < '0' || d > '1');
+    return d;
+}
+
+/* Función que muestra el reporte de las ganancias y avanza de día */
+void mostrarReporte() {
+    static double gananciasMes = 0.0;
+    double gananciasDia = 0.0;
+    static unsigned autosMes[2] = {0,0};
+    unsigned autosDia[2] = {0,0};
+    unsigned horas = 0;
+    register int i, j;
+    Vehiculo *actual, *liberar;
+    
+    system("CLS");
+    comprobarFecha();
+    for(i = 0; i < 100; i++) {
+        if(i < 20)
+            autosDia[0] += cantd[i];
+        else
+            autosDia[1] += cantd[i];
+        actual = primero[i];
+        for(j = 1; j <= cantd[i]; j++) {
+            if(i >= 20) {
+                horas += actual->horaSal - actual->horaEnt;
+                if(actual->minSal - actual->minEnt >= 30)
+                    horas++;
+                else
+                    if(actual->minSal - actual->minEnt < -30)
+                        horas--;
+            }
+            liberar = actual;
+            actual = actual->sig;
+            free(liberar);
+        }
+    }
+    gananciasMes += gananciasDia = horas * MONTO;
+    autosMes[0] += autosDia[0];
+    autosMes[1] += autosDia[1];
+    puts("\n\n\tREPORTE DIARIO\n");
+    printf("\nLas Ganancias de Hoy han sido: Bs %.2lf.\n", gananciasDia);
+    printf("Con un total de %i vehiculos atendidos y %i vehiculos del personal.\n", autosDia[1], autosDia[0]);
+    if(DIA == 1) {
+        puts("\n\n\tREPORTE MENSUAL\n");
+        printf("\nLas Ganancias del Mes han sido: Bs %.2lf.\n", gananciasMes);
+        printf("Con un total de %i vehiculos atendidos y %i vehiculos del personal.\n", autosMes[1], autosMes[0]);
+        gananciasMes = 0.0;
+        autosMes[0] = 0;
+        autosMes[1] = 0;
+    }
+    inicializarLista();
+    system("PAUSE");
+}
+
+/* Función que muestra el registro de vehiculos */
+void mostrarRegistro() {
+    register int i, j, k = 0;
+    Vehiculo *actual;
+    
+    system("CLS");
+    for(i = 0; i < 100; i++) {
+        actual = primero[i];
+        if(actual != NULL) {
+            k++;
+            printf("\n\tPuesto %i\n", i + 1);
+            for(j = 1; j <= cantd[i]; j++) {
+                printf("\nVehiculo: %s\n", actual->modelo);
+                printf("Matricula: %s\n", actual->matricula);
+                printf("Color: %s\n", actual->color);
+                printf("Hora de Entrada: %i:%i\n", actual->horaEnt, actual->minEnt);
+                printf("Hora de Salida: %i:%i\n", actual->horaSal, actual->minSal);
+                if(j % 3 == 0) getch();
+                actual = actual->sig;
+            }
+            getch();
+        }
+    }
+    if(k == 0)
+        puts("\nNo hay datos para mostrar en estos momentos.");
+    system("PAUSE");
+}
+
+/* Función que comprueba si el lugar esta ocupado y, sino lo está, guarda los datos.
+Recibe como parámetros: puesto, hora/minuto de entrada, hora/minuto de salida, modelo, matricula y color */
+int comprobarEspacio(int d, int hE, int mE, int hS, int mS, char *ml, char *mc, char *cl) {
+    register int i;
+    Vehiculo *actual = primero[d-1];
+    
+    for(i = 0; i < cantd[d-1]; i++) {
+        if(hE >= actual->horaEnt && hE <= actual->horaSal) {
+            if(hE == actual->horaEnt && mE < actual->minEnt);
+            else
+                if(hE == actual->horaSal && mE >= actual->minSal);
+            else
+                return ERROR;
+        }
+        if(hS >= actual->horaEnt && hS <= actual->horaSal) {
+            if(hS == actual->horaSal && mS > actual->minSal);
+            else
+                if(hS == actual->horaEnt && mS <= actual->minEnt);
+            else
+                return ERROR;
+        }
+        if(hE <= actual->horaEnt && hS >= actual->horaSal) {
+            if(hE == actual->horaSal && mE >= actual->minSal);
+            else
+                if(hS == actual->horaEnt && mS <= actual->minEnt);
+            else
+                return ERROR;
+        }
+        actual = actual->sig;
+    }
+    if((actual = (Vehiculo *)malloc(sizeof(Vehiculo))) == NULL)
+        return ERROR;
+    strcpy(actual->modelo, ml);
+    strcpy(actual->matricula, mc);
+    strcpy(actual->color, cl);
+    actual->horaEnt = hE;
+    actual->minEnt = mE;
+    actual->horaSal = hS;
+    actual->minSal = mS;
+    actual->sig = primero[d-1];
+    primero[d-1] = actual;
+    cantd[d-1]++;
+    return OK;
+}
+
+/* Función que controla el ingreso de vehículos */
+void ingresoVehiculo() {
+    char modelo[TAM], matricula[TAM], color[TAM];
+    unsigned horaEnt, minEnt;
+    unsigned horaSal, minSal;
+    unsigned puesto;
+    char temp[TAM];
+    char ID[TAM];
+    
+    system("CLS");
+    presentacion();
+    puts("\nNuestro estacionamiento cuenta con 100 puestos disponibles para su estadia.");
+    puts("Los primeros 20 puestos son fijos para nuestro personal.");
+    do {
+        printf("\nElija un lugar disponible: ");
+        fgets(temp, TAM, stdin);
+        (temp[strlen(temp)-1] == '\n') ? temp[strlen(temp)-1] = '\0' : fflush(stdin);
+        if(sscanf(temp, "%u", &puesto) < 1 || puesto < 1 || puesto > 100)
+            puts("Lugar no reconocido.");
+        else
+            if(puesto <= 20) {
+                puts("El puesto elegido es fijo y no esta disponible para el publico.");
+                printf("Ingrese su ID para poder estacionar: ");
+                fgets(ID, TAM, stdin);
+                (ID[strlen(ID)-1] == '\n') ? ID[strlen(ID)-1] = '\0' : fflush(stdin);
+                if(strcmp(ID, "123456789") == OK)
+                    break;
+                puts("No puede estacionar en este lugar.");    
+            }
+    } while(puesto <= 20 || puesto > 100);
+    puts("\nIndique los datos de su vehiculo:\n");
+    printf("Modelo: ");
+    strupr(fgets(modelo, TAM, stdin));
+    (modelo[strlen(modelo)-1] == '\n') ? modelo[strlen(modelo)-1] = '\0' : fflush(stdin);
+    printf("Matricula: ");
+    strupr(fgets(matricula, TAM, stdin));
+    (matricula[strlen(matricula)-1] == '\n') ? matricula[strlen(matricula)-1] = '\0' : fflush(stdin);
+    printf("Color: ");
+    strupr(fgets(color, TAM, stdin));
+    (color[strlen(color)-1] == '\n') ? color[strlen(color)-1] = '\0' : fflush(stdin);
+    do {
+        puts("\nIngrese la hora de entrada y la hora de salida de su vehiculo.");
+        puts("Utilizar formato de 24 horas (13:00):\n");
+        printf("Hora de Entrada: ");
+        fgets(temp, TAM, stdin);
+        (temp[strlen(temp)-1] == '\n') ? temp[strlen(temp)-1] = '\0' : fflush(stdin);
+        if(sscanf(temp, "%u:%u", &horaEnt, &minEnt) < 2)
+            puts("Formato no valido.");
+        else
+            if(horaEnt < 7 || horaEnt > 17 || minEnt < 0 || minEnt > 59)
+                puts("El horario de atencion es de 7:00 a 18:00.");
+        else {
+            printf("Hora de Salida: ");
+            fgets(temp, TAM, stdin);
+            (temp[strlen(temp)-1] == '\n') ? temp[strlen(temp)-1] = '\0' : fflush(stdin);
+            if(sscanf(temp, "%u:%u", &horaSal, &minSal) < 2)
+                puts("Formato no valido.");
+            else
+                if(horaSal < 7 || horaSal > 17 || minSal < 0 || minSal > 59)
+                    puts("El horario de atencion es de 7:00 a 18:00.");
+            else
+                if(horaSal < horaEnt || (horaSal == horaEnt && minSal <= minEnt))
+                    puts("El tiempo de estancia no es valido.");
+            else
+                if(comprobarEspacio(puesto, horaEnt, minEnt, horaSal, minSal, modelo, matricula, color) == ERROR)
+                    puts("El puesto indicado esta ocupado en este momento.");
+            else 
+                break;
+        }
+    } while(puesto);
+    system("PAUSE");
+}
+
+/* Aquí empieza el programa */
+int main() {
+    register char opc;
+    
+    inicializarLista();
+    comprobarFecha();
+    do {
+        system("CLS");
+        presentacion();
+        switch(opc = mostrarMenu()) {
+            case '0':
+                printf("\nGracias por su visita!\n");
+                break;
+            case '1':
+                mostrarReporte();
+                break;
+            case '2':
+                mostrarRegistro();
+                break;
+            case '3':
+                ingresoVehiculo();
+                break;
+        }
+    } while(opc != '0');
+    system("PAUSE");
+    return OK;
+}
